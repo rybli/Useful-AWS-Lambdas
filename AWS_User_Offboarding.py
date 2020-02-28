@@ -6,7 +6,7 @@
 # CloudWatch Logs: Write - CreateLogStream, PutLogEvents, CreateLogGroup
 # EC2: List - DescribeInstances
 # S3: Write - PutObject
-# Systems M<anager *
+# Systems Manager *
 
 import boto3
 import os
