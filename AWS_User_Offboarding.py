@@ -4,9 +4,10 @@
 
 # Lambda Permissions
 # CloudWatch Logs: Write - CreateLogStream, PutLogEvents, CreateLogGroup
-# EC2: List - DescribeInstances
-# S3: Write - PutObject
-# Systems Manager *
+# IAM: List - GetLoginProfile, ListAccessKeys, ListAttachedUserPolicies, ListGroupsForUser, ListMFADevices, ListUserPolicies
+# IAM: Read - GetUser
+# IAM: Write - DeactivateMFADevice, DeleteLoginProfile, DeleteVirtualMFADevice, RemoveUserFromGroup, UpdateAccessKey
+# IAM: Permissions management - DeleteUserPolicy, DetachUserPolicy
 
 import boto3
 import os
