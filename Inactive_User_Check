@@ -9,10 +9,10 @@ from dateutil.tz import tzutc
 from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
-    90_days_inactive()
+    inactive_90_days()
 
 # Create list of Users who were last active 90+ days ago.    
-def 90_days_inactive():
+def inactive_90_days():
     inactiveTime = datetime.datetime.now(tzutc()) - datetime.timedelta(days=int(os.environ['timeLimit']))
     users = []
     client = boto3.client('iam')
