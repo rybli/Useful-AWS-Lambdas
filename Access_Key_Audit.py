@@ -1,9 +1,11 @@
-# Create Report of access keys of Admin and Service accounts that are 60 and 365 days or older, respectively.
+# Service Accounts: If Access Key is older than 365 days, make inactive
+# User Accounts: If Access Key is older than 60 days, make inactive
 
 # Lambda Permissions
 # IAM: ListGroups
 # IAM: GetGroup
 # IAM: ListAccessKeys
+# IAM: UpdateAccessKey
 
 import boto3
 import datetime
@@ -14,7 +16,8 @@ from collections import defaultdict
 iam_client = boto3.client('iam')
 
 def lambda_handler(event, context):
-    access_key_report()
+    print(access_key_report()) # Print the report
+    disable_outdated_keys() # Disable keys that are outdated
 
 # Grab list of user in the service_account group, and Administrators group
 def get_users_from_group():
@@ -34,6 +37,7 @@ def get_users_from_group():
                 service_accounts.append(user["UserName"])
             else:
                 print("User not in Administrators or service_accounts gorup.")
+    
     return user_accounts, service_accounts
 
 def active_access_keys():
@@ -49,16 +53,14 @@ def active_access_keys():
     # Audit User Account Access keys
     for user in users:
         for key in iam_client.list_access_keys(UserName=user)['AccessKeyMetadata']:
-            if key['Status'] == 'Active':
-                if key['CreateDate'] <= user_Max_Age:
-                    user_access_keys[user].append(key['AccessKeyId'])
+            if key['Status'] == 'Active' and key['CreateDate'] <= user_Max_Age:
+                user_access_keys[user].append(key['AccessKeyId'])
     
     # Audit Service Account Acccess keys                
     for service in services:
         for key in iam_client.list_access_keys(UserName=service)['AccessKeyMetadata']:
-            if key['Status'] == 'Active':
-                if key['CreateDate'] <= service_Max_Age:
-                    service_access_keys[user].append(key['AccessKeyId'])
+            if key['Status'] == 'Active' and key['CreateDate'] <= service_Max_Age:
+                service_access_keys[user].append(key['AccessKeyId'])
     
     return user_access_keys, service_access_keys
     
@@ -71,10 +73,19 @@ def access_key_report():
         final_report += "User Accounts\n"
         for key in dict(users):
             final_report += f'{key} has the following access key(s) older than 60 days: {dict(users)[key]}\n'
+
     if services:
         # Append services with keys to report.
         final_report += '\nService Accounts\n'
         for key in dict(services):
-            final_report += f'{key} has the following access key(s) older than 60 days: {dict(services)[key]}\n'
-    
+            final_report += f'{key} has the following access key(s) older than 365 days: {dict(services)[key]}\n'
+
     return final_report
+    
+# Loop through entries in active_access_keys() function and set each key to 'Inactive'.
+def disable_outdated_keys():
+    for entry in active_access_keys():
+        for user, keys in dict(entry).items():
+            for key in keys:
+                iam_client.update_access_key(UserName=user, AccessKeyId=key, Status='Inactive')
+                print(f'Set {user}\'s key: {key} to Inactive.')
